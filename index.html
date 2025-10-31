@@ -1,40 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-  <title>Snake — Mobile</title>
-  <link rel="stylesheet" href="snake.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake Game</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="game-root">
-    <header class="topbar">
-      <div class="score" id="score">Score: 0</div>
-      <div class="highscore" id="highscore">High: 0</div>
-    </header>
-
-    <main class="game-area">
-      <div class="board" id="board" aria-hidden="false"></div>
-      <div class="food" id="food" aria-hidden="false"></div>
-    </main>
-
-    <!-- overlays -->
-    <div class="overlay overlay-play" id="overlayPlay">
-      <button id="playBtn" class="big-btn">PLAY</button>
+  <h1>🐍 Snake Game</h1>
+  <div class="game-container">
+    <div class="score-board">
+      <p>Score: <span id="score">0</span> | High Score: <span id="highScore">0</span></p>
     </div>
 
-    <div class="overlay overlay-gameover" id="overlayGameOver">
-      <h1 class="go-title">GAME OVER</h1>
-      <button id="gameOverBtn" class="big-btn">RESTART</button>
-    </div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
 
-    <!-- controls (pause/resume) -->
     <div class="controls">
-      <button id="pauseBtn" class="small-btn">Pause</button>
-      <button id="resumeBtn" class="small-btn" disabled>Resume</button>
+      <button id="playBtn">Play</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button id="resumeBtn" disabled>Resume</button>
     </div>
   </div>
 
-  <script src="snake.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>

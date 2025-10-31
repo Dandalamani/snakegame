@@ -1,212 +1,142 @@
-/* Mobile-first Snake game
-   - grid 20x20
-   - white food
-   - score/highscore large
-   - initial slow for first 10 points, then speed up every 5 points
-   - pause/resume + play/restart
-   - prevents pull-to-refresh
-*/
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const box = 20;
 
-const GRID = 20;
-const board = document.getElementById("board");
-const foodEl = document.getElementById("food");
-const scoreEl = document.getElementById("score");
-const highEl = document.getElementById("highscore");
-const overlayPlay = document.getElementById("overlayPlay");
-const overlayGameOver = document.getElementById("overlayGameOver");
-const playBtn = document.getElementById("playBtn");
-const restartBtn = document.getElementById("gameOverBtn");
-const pauseBtn = document.getElementById("pauseBtn");
-const resumeBtn = document.getElementById("resumeBtn");
-
-let snake = [{x: 10, y: 10}];
-let dir = "RIGHT";
-let food = {x: 5, y: 5};
+let snake = [{ x: 9 * box, y: 10 * box }];
+let food = {
+  x: Math.floor(Math.random() * 20) * box,
+  y: Math.floor(Math.random() * 20) * box
+};
 let score = 0;
-let highScore = parseInt(localStorage.getItem("snakeHigh")) || 0;
-highEl.textContent = `High: ${highScore}`;
+let highScore = localStorage.getItem("highScore") || 0;
+document.getElementById("highScore").innerText = highScore;
 
-let intervalId = null;
-let baseSpeed = 220;   // slow start
-let speed = baseSpeed;
-let running = false;
+let direction;
+let game;
 let paused = false;
 
-/* Prevent scroll/pull-to-refresh on mobile while game is active */
-document.body.addEventListener('touchmove', e => {
-  if (running) e.preventDefault();
-}, {passive:false});
+// =================== Swipe Controls (Mobile) ===================
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
 
-/* Helper: place food at random free cell */
-function placeFood(){
-  let tries = 0;
-  while(true && tries < 1000){
-    tries++;
-    const fx = Math.floor(Math.random()*GRID)+1;
-    const fy = Math.floor(Math.random()*GRID)+1;
-    if (!snake.some(s=>s.x===fx && s.y===fy)){
-      food = {x:fx,y:fy};
-      // position absolute food element using grid coordinates:
-      const cellW = board.clientWidth / GRID;
-      const cellH = board.clientHeight / GRID;
-      foodEl.style.left = `${(food.x-1)*cellW}px`;
-      foodEl.style.top  = `${(food.y-1)*cellH}px`;
-      return;
-    }
+canvas.addEventListener("touchstart", (e) => {
+  const touch = e.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+});
+
+canvas.addEventListener("touchend", (e) => {
+  const touch = e.changedTouches[0];
+  touchEndX = touch.clientX;
+  touchEndY = touch.clientY;
+  handleSwipe();
+});
+
+function handleSwipe() {
+  const dx = touchEndX - touchStartX;
+  const dy = touchEndY - touchStartY;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 30 && direction !== "LEFT") direction = "RIGHT";
+    else if (dx < -30 && direction !== "RIGHT") direction = "LEFT";
+  } else {
+    if (dy > 30 && direction !== "UP") direction = "DOWN";
+    else if (dy < -30 && direction !== "DOWN") direction = "UP";
   }
 }
 
-/* Draw snake cells (we create DIVs inside board) */
-function draw(){
-  // remove previous snake cells
-  board.querySelectorAll(".snake-cell").forEach(n=>n.remove());
-  // draw each part
-  for(let i=0;i<snake.length;i++){
-    const p = snake[i];
-    const d = document.createElement("div");
-    d.className = "snake-cell";
-    d.style.gridColumn = p.x;
-    d.style.gridRow = p.y;
-    // color head differently
-    d.style.background = (i===0) ? "linear-gradient(to bottom,#b7ffb7,#00c853)" : "#00ff7f";
-    board.appendChild(d);
-  }
-}
+// =================== Game Logic ===================
 
-/* Update loop */
-function step(){
-  if (!running || paused) return;
-  let head = {...snake[0]};
-  if (dir === "UP") head.y--;
-  if (dir === "DOWN") head.y++;
-  if (dir === "LEFT") head.x--;
-  if (dir === "RIGHT") head.x++;
+function draw() {
+  if (paused) return;
 
-  // wall collision
-  if (head.x < 1 || head.x > GRID || head.y < 1 || head.y > GRID){
-    return onGameOver();
-  }
-  // self collision
-  for(let i=0;i<snake.length;i++){
-    if (snake[i].x === head.x && snake[i].y === head.y) return onGameOver();
+  ctx.fillStyle = "grey";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw snake
+  for (let i = 0; i < snake.length; i++) {
+    ctx.fillStyle = "green";
+    ctx.fillRect(snake[i].x, snake[i].y, box, box);
   }
 
-  snake.unshift(head);
+  // Draw food
+  ctx.fillStyle = "white";
+  ctx.fillRect(food.x, food.y, box, box);
 
-  // food eaten
-  if (head.x === food.x && head.y === food.y){
+  let snakeX = snake[0].x;
+  let snakeY = snake[0].y;
+
+  if (direction === "LEFT") snakeX -= box;
+  if (direction === "UP") snakeY -= box;
+  if (direction === "RIGHT") snakeX += box;
+  if (direction === "DOWN") snakeY += box;
+
+  // If snake eats food
+  if (snakeX === food.x && snakeY === food.y) {
     score++;
-    scoreEl.textContent = `Score: ${score}`;
-    if (score > highScore){
-      highScore = score;
-      localStorage.setItem("snakeHigh", highScore);
-      highEl.textContent = `High: ${highScore}`;
-    }
-
-    // speed logic:
-    // first 10 points — remain slow (baseSpeed)
-    // after score >= 10, every 5 points decrease delay by 15ms (faster)
-    if (score >= 10){
-      const extraSteps = Math.floor((score - 10)/5);
-      speed = Math.max(70, baseSpeed - extraSteps * 15);
-      clearInterval(intervalId);
-      intervalId = setInterval(step, speed);
-    }
-
-    placeFood();
+    document.getElementById("score").innerText = score;
+    food = {
+      x: Math.floor(Math.random() * 20) * box,
+      y: Math.floor(Math.random() * 20) * box
+    };
   } else {
     snake.pop();
   }
 
-  draw();
-}
+  const newHead = { x: snakeX, y: snakeY };
 
-/* Start / restart / pause / resume */
-function startGame(){
-  score = 0;
-  scoreEl.textContent = `Score: ${score}`;
-  snake = [{x:10,y:10}];
-  dir = "RIGHT";
-  running = true;
-  paused = false;
-  overlayPlay.style.display = "none";
-  overlayGameOver.style.display = "none";
-  baseSpeed = 220; // slow starting speed
-  speed = baseSpeed;
-  clearInterval(intervalId);
-  intervalId = setInterval(step, speed);
-  placeFood();
-  draw();
-  pauseBtn.disabled = false;
-  resumeBtn.disabled = true;
-}
-function onGameOver(){
-  running = false;
-  paused = false;
-  clearInterval(intervalId);
-  overlayGameOver.style.display = "flex";
-  pauseBtn.disabled = true;
-  resumeBtn.disabled = true;
-}
-function pauseGame(){
-  if (!running || paused) return;
-  paused = true;
-  pauseBtn.disabled = true;
-  resumeBtn.disabled = false;
-}
-function resumeGame(){
-  if (!running || !paused) return;
-  paused = false;
-  pauseBtn.disabled = false;
-  resumeBtn.disabled = true;
-}
-
-/* Touch swipe controls */
-let sX=0,sY=0,eX=0,eY=0;
-board.addEventListener("touchstart", e=>{
-  const t = e.touches[0];
-  sX = t.clientX; sY = t.clientY;
-}, {passive:true});
-
-board.addEventListener("touchend", e=>{
-  const t = e.changedTouches[0];
-  eX = t.clientX; eY = t.clientY;
-  if (!running || paused) return;
-  const dx = eX - sX, dy = eY - sY;
-  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return; // tiny swipe: ignore
-  if (Math.abs(dx) > Math.abs(dy)){
-    if (dx > 0 && dir !== "LEFT") dir = "RIGHT";
-    else if (dx < 0 && dir !== "RIGHT") dir = "LEFT";
-  } else {
-    if (dy > 0 && dir !== "UP") dir = "DOWN";
-    else if (dy < 0 && dir !== "DOWN") dir = "UP";
+  // Game Over Conditions
+  if (
+    snakeX < 0 ||
+    snakeY < 0 ||
+    snakeX >= canvas.width ||
+    snakeY >= canvas.height ||
+    collision(newHead, snake)
+  ) {
+    clearInterval(game);
+    alert("Game Over! Your Score: " + score);
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem("highScore", highScore);
+    }
+    resetGame();
   }
-}, {passive:true});
 
-/* Keyboard fallback */
-window.addEventListener("keydown", e=>{
-  if (!running) return;
-  if (e.key === "ArrowUp" && dir !== "DOWN") dir = "UP";
-  else if (e.key === "ArrowDown" && dir !== "UP") dir = "DOWN";
-  else if (e.key === "ArrowLeft" && dir !== "RIGHT") dir = "LEFT";
-  else if (e.key === "ArrowRight" && dir !== "LEFT") dir = "RIGHT";
+  snake.unshift(newHead);
+}
+
+function collision(head, array) {
+  return array.some(segment => head.x === segment.x && head.y === segment.y);
+}
+
+function resetGame() {
+  snake = [{ x: 9 * box, y: 10 * box }];
+  direction = undefined;
+  score = 0;
+  document.getElementById("score").innerText = score;
+  document.getElementById("highScore").innerText = highScore;
+  document.getElementById("playBtn").disabled = false;
+  document.getElementById("pauseBtn").disabled = true;
+  document.getElementById("resumeBtn").disabled = true;
+}
+
+// =================== Button Controls ===================
+document.getElementById("playBtn").addEventListener("click", () => {
+  game = setInterval(draw, 120);
+  document.getElementById("playBtn").disabled = true;
+  document.getElementById("pauseBtn").disabled = false;
 });
 
-/* Resize / reposition food on orientation change */
-window.addEventListener("resize", ()=>{
-  // reposition food element to align with grid after resize
-  placeFood();
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  paused = true;
+  document.getElementById("pauseBtn").disabled = true;
+  document.getElementById("resumeBtn").disabled = false;
 });
 
-/* Buttons */
-playBtn.addEventListener("click", startGame);
-restartBtn.addEventListener("click", ()=>{ overlayGameOver.style.display = "none"; startGame(); });
-pauseBtn.addEventListener("click", pauseGame);
-resumeBtn.addEventListener("click", resumeGame);
-
-/* Initial render */
-placeFood();
-draw();
-overlayPlay.style.display = "flex";
-pauseBtn.disabled = true;
-resumeBtn.disabled = true;
+document.getElementById("resumeBtn").addEventListener("click", () => {
+  paused = false;
+  document.getElementById("pauseBtn").disabled = false;
+  document.getElementById("resumeBtn").disabled = true;
+});
