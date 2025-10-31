@@ -1,36 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Snake Game</title>
-  <link rel="stylesheet" href="snake.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="game-container">
-    <div class="game-card">
-      <h1 class="game-title">SNAKE GAME</h1>
-      <div class="scoreboard">
-        <span class="score">Score: 0</span>
-        <span class="highscore">High Score: 0</span>
-      </div>
+  <div class="game-wrapper">
+    <div class="scoreboard">
+      <span class="score">Score: 0</span>
+      <span class="highscore">High Score: 0</span>
+    </div>
 
-      <div class="canvas-container">
-        <div class="bodycanvas">
-          <div class="food"></div>
-        </div>
+    <div class="bodycanvas"></div>
+    <div class="food"></div>
 
-        <div id="overlayPlay" class="overlay">
-          <button id="playBtn">Play</button>
-        </div>
+    <div id="overlayPlay" class="overlay active">
+      <button id="playBtn" class="btn">Play</button>
+    </div>
 
-        <div id="overlayGameOver" class="overlay">
-          <h2>Game Over</h2>
-          <button id="gameOverBtn">Restart</button>
-        </div>
-      </div>
+    <div id="overlayGameOver" class="overlay">
+      <h2>Game Over</h2>
+      <button id="gameOverBtn" class="btn">Play Again</button>
     </div>
   </div>
-  <script src="snake.js" defer></script>
+
+  <script src="snake.js"></script>
 </body>
 </html>

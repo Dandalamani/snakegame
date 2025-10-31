@@ -18,40 +18,34 @@ let gameInterval = null;
 let speed = 150;
 let isGameRunning = false;
 
-/* 🧩 Prevent pull-to-refresh and scrolling on mobile */
-bodyCanvas.addEventListener("touchmove", function (e) {
-  e.preventDefault();
+/* Disable pull-to-refresh and scroll */
+document.body.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+document.body.addEventListener("touchstart", e => {
+  if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 
-bodyCanvas.addEventListener("touchstart", function (e) {
-  if (e.touches.length > 1) e.preventDefault(); // disable zoom pinch
-}, { passive: false });
-
-// random food
 function randomFood() {
   foodx = Math.floor(Math.random() * 30) + 1;
   foody = Math.floor(Math.random() * 30) + 1;
-  food.style.gridRow = foody;
   food.style.gridColumn = foodx;
+  food.style.gridRow = foody;
 }
 
-// draw snake
 function drawSnake() {
   document.querySelectorAll(".snakePart").forEach(el => el.remove());
   snakeBody.forEach((part, index) => {
-    const partDiv = document.createElement("div");
-    partDiv.classList.add("snakePart");
-    partDiv.style.gridRow = part.y;
-    partDiv.style.gridColumn = part.x;
-    partDiv.style.background =
+    const div = document.createElement("div");
+    div.classList.add("snakePart");
+    div.style.gridColumn = part.x;
+    div.style.gridRow = part.y;
+    div.style.background =
       index === 0
         ? "linear-gradient(to bottom, #a6ff00, #00ff7f)"
         : "linear-gradient(to bottom, #32cd32, #7cfc00)";
-    bodyCanvas.appendChild(partDiv);
+    bodyCanvas.appendChild(div);
   });
 }
 
-// keyboard controls (for desktop)
 document.addEventListener("keydown", (e) => {
   if (!isGameRunning) return;
   if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
@@ -60,19 +54,19 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
 });
 
-// swipe controls (for mobile)
+/* Swipe controls for mobile */
 let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
 
 bodyCanvas.addEventListener("touchstart", (e) => {
-  const touch = e.touches[0];
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
 });
 
 bodyCanvas.addEventListener("touchmove", (e) => {
-  const touch = e.touches[0];
-  touchEndX = touch.clientX;
-  touchEndY = touch.clientY;
+  const t = e.touches[0];
+  touchEndX = t.clientX;
+  touchEndY = t.clientY;
 });
 
 bodyCanvas.addEventListener("touchend", () => {
@@ -80,9 +74,7 @@ bodyCanvas.addEventListener("touchend", () => {
   const dy = touchEndY - touchStartY;
   const absX = Math.abs(dx);
   const absY = Math.abs(dy);
-
   if (!isGameRunning) return;
-
   if (Math.max(absX, absY) > 30) {
     if (absX > absY) {
       if (dx > 0 && direction !== "LEFT") direction = "RIGHT";
@@ -94,47 +86,37 @@ bodyCanvas.addEventListener("touchend", () => {
   }
 });
 
-// update loop
 function updateGame() {
-  let headX = snakeBody[0].x;
-  let headY = snakeBody[0].y;
+  let head = { ...snakeBody[0] };
+  if (direction === "UP") head.y -= 1;
+  else if (direction === "DOWN") head.y += 1;
+  else if (direction === "LEFT") head.x -= 1;
+  else if (direction === "RIGHT") head.x += 1;
 
-  if (direction === "UP") headY -= 1;
-  else if (direction === "DOWN") headY += 1;
-  else if (direction === "LEFT") headX -= 1;
-  else if (direction === "RIGHT") headX += 1;
+  if (head.x < 1 || head.x > 30 || head.y < 1 || head.y > 30)
+    return gameOver();
 
-  let newHead = { x: headX, y: headY };
+  for (let p of snakeBody)
+    if (p.x === head.x && p.y === head.y) return gameOver();
 
-  if (headX < 1 || headX > 30 || headY < 1 || headY > 30) return gameOver();
-
-  for (let part of snakeBody) {
-    if (part.x === newHead.x && part.y === newHead.y) return gameOver();
-  }
-
-  snakeBody.unshift(newHead);
-
-  if (newHead.x === foodx && newHead.y === foody) {
+  snakeBody.unshift(head);
+  if (head.x === foodx && head.y === foody) {
     score++;
     scoreSpan.textContent = "Score: " + score;
-
     if (score > highScore) {
       highScore = score;
       localStorage.setItem("snakeHighScore", highScore);
       highScoreSpan.textContent = "High Score: " + highScore;
     }
-
     if (score % 10 === 0 && speed > 50) {
       speed -= 10;
       clearInterval(gameInterval);
       gameInterval = setInterval(updateGame, speed);
     }
-
     randomFood();
   } else {
     snakeBody.pop();
   }
-
   drawSnake();
 }
 
@@ -146,11 +128,9 @@ function startGame() {
   speed = 150;
   randomFood();
   drawSnake();
-
-  overlayPlay.style.display = "none";
-  overlayGameOver.style.display = "none";
+  overlayPlay.classList.remove("active");
+  overlayGameOver.classList.remove("active");
   isGameRunning = true;
-
   if (gameInterval) clearInterval(gameInterval);
   gameInterval = setInterval(updateGame, speed);
 }
@@ -158,7 +138,7 @@ function startGame() {
 function gameOver() {
   clearInterval(gameInterval);
   isGameRunning = false;
-  overlayGameOver.style.display = "flex";
+  overlayGameOver.classList.add("active");
 }
 
 playBtn.addEventListener("click", startGame);
