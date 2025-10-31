@@ -95,7 +95,7 @@ canvas {
   display: none; /* hide initially */
   flex-direction: column;
   align-items: center;
-  margin-top: 15px;
+  margin-top: 10px;
   gap: 10px;
 }
 
@@ -106,20 +106,20 @@ canvas {
 }
 
 .arrow-btn {
-  background: linear-gradient(135deg, #00ffcc, #00bfff);
+  width: 50px;
+  height: 50px;
+  font-size: 1.5em;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #00ffcc, #16d800);
   border: none;
-  padding: 30px 36px;
-  font-size: 1.2em;
-  border-radius: 10px;
-  cursor: pointer;
   color: white;
-  font-weight: 900;
-  box-shadow: 0 0 rgba(0, 255, 204, 0.4);
+  cursor: pointer;
+  box-shadow: 0 0 #00ffcc;
   transition: all 0.2s ease;
 }
 
 .arrow-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.0);
 }
 
 .game-over {
@@ -171,5 +171,10 @@ canvas {
     border-radius: 0;
     border: none;
     box-shadow: none;
+  }
+  .arrow-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 2em;
   }
 }

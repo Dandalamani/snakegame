@@ -18,6 +18,13 @@ let snake, food, direction, game, paused, score, highScore, speed;
 highScore = localStorage.getItem("highScore") || 0;
 highScoreDisplay.textContent = highScore;
 
+// Initial Setup: Only show Play Button
+canvas.style.display = "none";
+scoreBoard.style.display = "none";
+pauseBtn.style.display = "none";
+resumeBtn.style.display = "none";
+document.querySelector(".arrow-controls").style.display = "none";
+
 function initGame() {
   snake = [{ x: 9 * box, y: 10 * box }];
   direction = "RIGHT";
@@ -32,11 +39,10 @@ function initGame() {
   scoreBoard.style.display = "block";
   pauseBtn.style.display = "inline-block";
   resumeBtn.style.display = "none";
-  
+
   // Show arrows only after Play
   document.querySelector(".arrow-controls").style.display = "flex";
 }
-
 
 function spawnFood() {
   food = {
@@ -51,6 +57,7 @@ function draw() {
   ctx.fillStyle = "#1e293b";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Draw food
   const gradientFood = ctx.createRadialGradient(
     food.x + 10, food.y + 10, 2,
     food.x + 10, food.y + 10, 10
@@ -62,6 +69,7 @@ function draw() {
   ctx.roundRect(food.x, food.y, box, box, 6);
   ctx.fill();
 
+  // Draw snake
   for (let i = 0; i < snake.length; i++) {
     ctx.fillStyle = i === 0 ? "#00ffcc" : "#00e6b8";
     ctx.shadowColor = "#00ffff";
@@ -84,9 +92,9 @@ function draw() {
     score++;
     scoreDisplay.textContent = score;
     spawnFood();
-    if (score > 10 && score % 5 === 0 && speed > 100) {
+    if (score > 10 && score % 5 === 0 && speed > 50) {
       clearInterval(game);
-      speed -= 50;
+      speed -= 20;
       game = setInterval(draw, speed);
     }
   } else {
@@ -120,6 +128,7 @@ function handleGameOver() {
   scoreBoard.style.display = "none";
   pauseBtn.style.display = "none";
   resumeBtn.style.display = "none";
+  document.querySelector(".arrow-controls").style.display = "none";
 
   gameOverScreen.style.display = "flex";
 }
@@ -152,7 +161,7 @@ resumeBtn.addEventListener("click", () => {
   resumeBtn.style.display = "none";
 });
 
-// Arrow Buttons
+// Arrow Buttons - Instant Response
 arrowButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     const dir = btn.getAttribute("data-dir");
@@ -163,6 +172,7 @@ arrowButtons.forEach(btn => {
       (dir === "RIGHT" && direction !== "LEFT")
     ) {
       direction = dir;
+      draw(); // immediate movement
     }
   });
 });
