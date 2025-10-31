@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Snake Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="snake.css">
 </head>
 <body>
-  <div class="game-wrapper">
+  <div class="game-container">
     <div class="scoreboard">
       <span class="score">Score: 0</span>
-      <span class="highscore">High Score: 0</span>
+      <span class="highscore">High: 0</span>
+    </div>
+    <div class="bodycanvas">
+      <div class="food"></div>
     </div>
 
-    <div class="bodycanvas"></div>
-    <div class="food"></div>
-
-    <div id="overlayPlay" class="overlay active">
-      <button id="playBtn" class="btn">Play</button>
+    <div id="overlayPlay" class="overlay">
+      <button id="playBtn">PLAY</button>
     </div>
 
     <div id="overlayGameOver" class="overlay">
       <h2>Game Over</h2>
-      <button id="gameOverBtn" class="btn">Play Again</button>
+      <button id="restartBtn">Restart</button>
     </div>
   </div>
 
