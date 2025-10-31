@@ -16,7 +16,6 @@ body {
   overflow: hidden;
 }
 
-/* --- TITLE --- */
 .title {
   font-size: 2em;
   font-weight: 500;
@@ -26,7 +25,6 @@ body {
   margin-bottom: 10px;
 }
 
-/* --- GAME CONTAINER --- */
 .game-container {
   display: flex;
   flex-direction: column;
@@ -39,9 +37,9 @@ body {
   box-shadow: 0 0 rgba(0, 255, 204, 0.2);
   padding: 10px;
   margin: 0;
+  position: relative;
 }
 
-/* --- CANVAS --- */
 canvas {
   background: linear-gradient(145deg, #1e293b, #111827);
   border-radius: 15px;
@@ -53,7 +51,6 @@ canvas {
   aspect-ratio: 1 / 1;
 }
 
-/* --- SCOREBOARD --- */
 .score-board {
   font-size: 1.1em;
   color: #e0f7fa;
@@ -61,7 +58,6 @@ canvas {
   margin-bottom: 10px;
 }
 
-/* --- BUTTONS --- */
 .controls {
   margin-top: 10px;
   display: flex;
@@ -95,21 +91,55 @@ canvas {
   transform: scale(1.03);
 }
 
-/* --- GAME OVER SCREEN --- */
-.game-over {
+.arrow-controls {
+  display: none; /* hide initially */
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+  gap: 5px;
+}
+
+
+.arrow-row {
   display: flex;
+  gap: 5px;
+}
+
+.arrow-btn {
+  background: linear-gradient(135deg, #00ffcc, #00bfff);
+  border: none;
+  padding: 10px 16px;
+  font-size: 1.2em;
+  border-radius: 10px;
+  cursor: pointer;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 0 rgba(0, 255, 204, 0.4);
+  transition: all 0.2s ease;
+}
+
+.arrow-btn:hover {
+  transform: scale(1.1);
+}
+
+.game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  gap: 5px; /* space between items */
-  background: rgba(0, 0, 0, 0.8);
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.85);
   border: 2px solid #00ffcc;
   border-radius: 15px;
   padding: 20px 10px;
-  margin-top: 10px;
   width: 60%;
   max-width: 400px;
+  z-index: 10;
 }
 
 .game-over h2 {
@@ -124,7 +154,6 @@ canvas {
   margin-bottom: 15px;
 }
 
-/* --- RESPONSIVE --- */
 @media (max-width: 600px) {
   body {
     justify-content: flex-start;
@@ -133,7 +162,7 @@ canvas {
     font-size: 1.6em;
     margin-top: 5px;
   }
-  .btn {
+  .btn, .arrow-btn {
     font-size: 0.9em;
     padding: 8px 16px;
   }

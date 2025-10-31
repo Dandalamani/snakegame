@@ -10,6 +10,7 @@ const gameOverScreen = document.getElementById("gameOverScreen");
 const finalScore = document.getElementById("finalScore");
 const replayBtn = document.getElementById("replayBtn");
 const gameContainer = document.getElementById("gameContainer");
+const arrowButtons = document.querySelectorAll(".arrow-btn");
 
 const box = 20;
 let snake, food, direction, game, paused, score, highScore, speed;
@@ -17,23 +18,26 @@ let snake, food, direction, game, paused, score, highScore, speed;
 highScore = localStorage.getItem("highScore") || 0;
 highScoreDisplay.textContent = highScore;
 
-// Initialize Game
 function initGame() {
   snake = [{ x: 9 * box, y: 10 * box }];
-  direction = "RIGHT"; // ✅ Starts moving automatically
+  direction = "RIGHT";
   score = 0;
   paused = false;
   speed = 150;
   spawnFood();
   scoreDisplay.textContent = score;
+
   gameOverScreen.style.display = "none";
   canvas.style.display = "block";
   scoreBoard.style.display = "block";
   pauseBtn.style.display = "inline-block";
   resumeBtn.style.display = "none";
+  
+  // Show arrows only after Play
+  document.querySelector(".arrow-controls").style.display = "flex";
 }
 
-// Food Generator
+
 function spawnFood() {
   food = {
     x: Math.floor(Math.random() * (canvas.width / box)) * box,
@@ -41,14 +45,12 @@ function spawnFood() {
   };
 }
 
-// Draw Elements
 function draw() {
   if (paused) return;
 
   ctx.fillStyle = "#1e293b";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Food
   const gradientFood = ctx.createRadialGradient(
     food.x + 10, food.y + 10, 2,
     food.x + 10, food.y + 10, 10
@@ -60,7 +62,6 @@ function draw() {
   ctx.roundRect(food.x, food.y, box, box, 6);
   ctx.fill();
 
-  // Snake
   for (let i = 0; i < snake.length; i++) {
     ctx.fillStyle = i === 0 ? "#00ffcc" : "#00e6b8";
     ctx.shadowColor = "#00ffff";
@@ -79,13 +80,10 @@ function draw() {
   if (direction === "UP") headY -= box;
   if (direction === "DOWN") headY += box;
 
-  // Eat Food
   if (headX === food.x && headY === food.y) {
     score++;
     scoreDisplay.textContent = score;
     spawnFood();
-
-    // ✅ Increase speed after 10, then every +5 points
     if (score > 10 && score % 5 === 0 && speed > 60) {
       clearInterval(game);
       speed -= 10;
@@ -97,7 +95,6 @@ function draw() {
 
   const newHead = { x: headX, y: headY };
 
-  // Collision detection
   if (
     headX < 0 || headY < 0 ||
     headX >= canvas.width || headY >= canvas.height ||
@@ -111,7 +108,6 @@ function draw() {
   snake.unshift(newHead);
 }
 
-// Handle Game Over
 function handleGameOver() {
   finalScore.textContent = score;
   if (score > highScore) {
@@ -120,17 +116,15 @@ function handleGameOver() {
   }
   highScoreDisplay.textContent = highScore;
 
-  // Hide game canvas & buttons
-  canvas.style.display = "none";
+  canvas.style.display = "block";
   scoreBoard.style.display = "none";
   pauseBtn.style.display = "none";
   resumeBtn.style.display = "none";
 
-  // Show Game Over UI
   gameOverScreen.style.display = "flex";
 }
 
-// ✅ Play button (first start)
+// Play / Replay
 playBtn.addEventListener("click", () => {
   initGame();
   playBtn.style.display = "none";
@@ -138,7 +132,6 @@ playBtn.addEventListener("click", () => {
   game = setInterval(draw, speed);
 });
 
-// ✅ Replay button (after game over)
 replayBtn.addEventListener("click", () => {
   initGame();
   gameOverScreen.style.display = "none";
@@ -146,7 +139,7 @@ replayBtn.addEventListener("click", () => {
   game = setInterval(draw, speed);
 });
 
-// Pause/Resume
+// Pause / Resume
 pauseBtn.addEventListener("click", () => {
   paused = true;
   pauseBtn.style.display = "none";
@@ -157,6 +150,21 @@ resumeBtn.addEventListener("click", () => {
   paused = false;
   pauseBtn.style.display = "inline-block";
   resumeBtn.style.display = "none";
+});
+
+// Arrow Buttons
+arrowButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const dir = btn.getAttribute("data-dir");
+    if (
+      (dir === "UP" && direction !== "DOWN") ||
+      (dir === "DOWN" && direction !== "UP") ||
+      (dir === "LEFT" && direction !== "RIGHT") ||
+      (dir === "RIGHT" && direction !== "LEFT")
+    ) {
+      direction = dir;
+    }
+  });
 });
 
 // Swipe Controls
@@ -188,7 +196,7 @@ function handleSwipe() {
   }
 }
 
-// Helper for rounded rectangle
+// Rounded rectangle helper
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
   if (w < 2 * r) r = w / 2;
   if (h < 2 * r) r = h / 2;
