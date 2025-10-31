@@ -23,7 +23,7 @@ function initGame() {
   direction = "RIGHT";
   score = 0;
   paused = false;
-  speed = 150;
+  speed = 200;
   spawnFood();
   scoreDisplay.textContent = score;
 
@@ -84,9 +84,9 @@ function draw() {
     score++;
     scoreDisplay.textContent = score;
     spawnFood();
-    if (score > 10 && score % 5 === 0 && speed > 60) {
+    if (score > 10 && score % 5 === 0 && speed > 100) {
       clearInterval(game);
-      speed -= 10;
+      speed -= 50;
       game = setInterval(draw, speed);
     }
   } else {
