@@ -18,6 +18,15 @@ let gameInterval = null;
 let speed = 150;
 let isGameRunning = false;
 
+/* 🧩 Prevent pull-to-refresh and scrolling on mobile */
+bodyCanvas.addEventListener("touchmove", function (e) {
+  e.preventDefault();
+}, { passive: false });
+
+bodyCanvas.addEventListener("touchstart", function (e) {
+  if (e.touches.length > 1) e.preventDefault(); // disable zoom pinch
+}, { passive: false });
+
 // random food
 function randomFood() {
   foodx = Math.floor(Math.random() * 30) + 1;
