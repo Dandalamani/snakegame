@@ -4,24 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Snake Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="snake.css" />
 </head>
 <body>
-  <h1>🐍 Snake Game</h1>
+  <h1 class="title">Snake Game</h1>
+
   <div class="game-container">
-    <div class="score-board">
-      <p>Score: <span id="score">0</span> | High Score: <span id="highScore">0</span></p>
+    <div class="score-board" id="scoreBoard" style="display: none;">
+      <p>
+        <span>Score: <span id="score">0</span></span>
+        <span>|</span>
+        <span>High Score: <span id="highScore">0</span></span>
+      </p>
     </div>
 
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <canvas id="gameCanvas" width="400" height="400" style="display: none;"></canvas>
 
     <div class="controls">
-      <button id="playBtn">Play</button>
-      <button id="pauseBtn" disabled>Pause</button>
-      <button id="resumeBtn" disabled>Resume</button>
+      <button id="playBtn" class="btn btn-play">▶ Play</button>
+      <button id="pauseBtn" class="btn btn-pause" style="display: none;">⏸ Pause</button>
+      <button id="resumeBtn" class="btn btn-resume" style="display: none;">⏵ Resume</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="snake.js"></script>
 </body>
 </html>

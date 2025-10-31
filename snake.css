@@ -1,78 +1,117 @@
+/* --- GLOBAL --- */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Arial', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 body {
-  background-color: #222;
-  color: white;
+  background: radial-gradient(circle at top, #111827 0%, #000 100%);
+  color: #fff;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: center;
   height: 100vh;
-  flex-direction: column;
-}
-
-h1 {
-  margin-bottom: 10px;
   text-align: center;
+  overflow: hidden;
 }
 
+/* --- TITLE --- */
+.title {
+  font-size: 2.2em;
+  font-weight: 400;
+  color: #00ffcc;
+  text-shadow: 0 0 #00ffcc, 0 0 #0099ff;
+  margin-bottom: 15px;
+}
+
+/* --- GAME CONTAINER --- */
 .game-container {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: rgba(25, 25, 25, 0.8);
+  border: 1px solid #00ffcc;
+  border-radius: 20px;
+  padding: 20px 30px;
+  box-shadow: 0 0 2px rgba(0, 255, 204, 0.4);
 }
 
+/* --- CANVAS --- */
 canvas {
-  background-color: grey;
-  border: 2px solid white;
+  background: linear-gradient(145deg, #1e293b, #111827);
+  border-radius: 15px;
+  border: 1px solid rgba(0, 255, 204, 0.5);
+  box-shadow: inset 0 0 5px rgba(0, 255, 204, 0.3);
   max-width: 90vw;
   max-height: 60vh;
-  touch-action: none; /* Prevents scrolling while swiping */
+  margin-top: 10px;
+  touch-action: none;
 }
 
+/* --- SCOREBOARD --- */
+.score-board {
+  font-size: 1.1em;
+  color: #e0f7fa;
+  text-shadow: 0 0 #00ffcc;
+  margin-bottom: 10px;
+}
+
+/* --- BUTTONS --- */
 .controls {
-  margin-top: 10px;
+  margin-top: 15px;
   display: flex;
   gap: 10px;
 }
 
-button {
-  background-color: #28a745;
+.btn {
   border: none;
-  color: white;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 5px;
+  padding: 10px 24px;
+  font-size: 1em;
+  border-radius: 30px;
   cursor: pointer;
-  transition: background 0.3s;
+  color: white;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 #00ffcc66;
 }
 
-button:hover {
-  background-color: #218838;
+.btn-play {
+  background: linear-gradient(135deg, #00ffea, #4c00ff);
+}
+.btn-play:hover {
+  box-shadow: 0 0 #00ffff;
+  transform: scale(1.0);
 }
 
-.score-board {
-  margin: 10px 0;
-  text-align: center;
+.btn-pause {
+  background: linear-gradient(135deg, #ff9f1c, #ff6b00);
+}
+.btn-pause:hover {
+  box-shadow: 0 0 #ff9f1c;
+  transform: scale(1.0);
 }
 
-#playBtn {
-  background-color: #007bff;
+.btn-resume {
+  background: linear-gradient(135deg, #14ffec, #16d800);
+}
+.btn-resume:hover {
+  box-shadow: 0 0 #14ff24;
+  transform: scale(1.0);
 }
 
-#playBtn:hover {
-  background-color: #0056b3;
-}
 
+/* --- RESPONSIVE --- */
 @media (max-width: 600px) {
-  button {
-    font-size: 14px;
-    padding: 8px 14px;
+  .title {
+    font-size: 1.8em;
+  }
+  .btn {
+    font-size: 0.9em;
+    padding: 8px 18px;
   }
   canvas {
     max-width: 95vw;
