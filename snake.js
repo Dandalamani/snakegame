@@ -1,180 +1,212 @@
-const food = document.querySelector(".food");
-const bodyCanvas = document.querySelector(".bodycanvas");
-const scoreSpan = document.querySelector(".score");
-const highScoreSpan = document.querySelector(".highscore");
-const playBtn = document.getElementById("playBtn");
+/* Mobile-first Snake game
+   - grid 20x20
+   - white food
+   - score/highscore large
+   - initial slow for first 10 points, then speed up every 5 points
+   - pause/resume + play/restart
+   - prevents pull-to-refresh
+*/
+
+const GRID = 20;
+const board = document.getElementById("board");
+const foodEl = document.getElementById("food");
+const scoreEl = document.getElementById("score");
+const highEl = document.getElementById("highscore");
 const overlayPlay = document.getElementById("overlayPlay");
 const overlayGameOver = document.getElementById("overlayGameOver");
-const gameOverBtn = document.getElementById("gameOverBtn");
+const playBtn = document.getElementById("playBtn");
+const restartBtn = document.getElementById("gameOverBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const resumeBtn = document.getElementById("resumeBtn");
 
-let foodx, foody;
-let direction = "RIGHT";
+let snake = [{x: 10, y: 10}];
+let dir = "RIGHT";
+let food = {x: 5, y: 5};
 let score = 0;
-let highScore = localStorage.getItem("snakeHighScore") || 0;
-highScoreSpan.textContent = "High Score: " + highScore;
+let highScore = parseInt(localStorage.getItem("snakeHigh")) || 0;
+highEl.textContent = `High: ${highScore}`;
 
-let snakeBody = [{ x: 6, y: 1 }];
-let gameInterval = null;
-let speed = 200;
-let isGameRunning = false;
-let isPaused = false;
+let intervalId = null;
+let baseSpeed = 220;   // slow start
+let speed = baseSpeed;
+let running = false;
+let paused = false;
 
-function randomFood() {
-  foodx = Math.floor(Math.random() * 30) + 1;
-  foody = Math.floor(Math.random() * 30) + 1;
-  food.style.gridRow = foody;
-  food.style.gridColumn = foodx;
-}
+/* Prevent scroll/pull-to-refresh on mobile while game is active */
+document.body.addEventListener('touchmove', e => {
+  if (running) e.preventDefault();
+}, {passive:false});
 
-function drawSnake() {
-  document.querySelectorAll(".snakePart").forEach(el => el.remove());
-  snakeBody.forEach((part, index) => {
-    const partDiv = document.createElement("div");
-    partDiv.classList.add("snakePart");
-    partDiv.style.gridRow = part.y;
-    partDiv.style.gridColumn = part.x;
-    partDiv.style.background =
-      index === 0
-        ? "linear-gradient(to bottom, #a6ff00, #00ff7f)"
-        : "linear-gradient(to bottom, #32cd32, #7cfc00)";
-    bodyCanvas.appendChild(partDiv);
-  });
-}
-
-document.addEventListener("keydown", (e) => {
-  if (!isGameRunning) return;
-  if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-  else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-  else if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-  else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-});
-
-let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
-
-bodyCanvas.addEventListener("touchstart", (e) => {
-  const touch = e.touches[0];
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
-});
-
-bodyCanvas.addEventListener("touchmove", (e) => {
-  const touch = e.touches[0];
-  touchEndX = touch.clientX;
-  touchEndY = touch.clientY;
-});
-
-bodyCanvas.addEventListener("touchend", (e) => {
-  e.preventDefault();
-  const dx = touchEndX - touchStartX;
-  const dy = touchEndY - touchStartY;
-  const absX = Math.abs(dx);
-  const absY = Math.abs(dy);
-
-  if (!isGameRunning || isPaused) return;
-
-  if (Math.max(absX, absY) > 30) {
-    if (absX > absY) {
-      if (dx > 0 && direction !== "LEFT") direction = "RIGHT";
-      else if (dx < 0 && direction !== "RIGHT") direction = "LEFT";
-    } else {
-      if (dy > 0 && direction !== "UP") direction = "DOWN";
-      else if (dy < 0 && direction !== "DOWN") direction = "UP";
+/* Helper: place food at random free cell */
+function placeFood(){
+  let tries = 0;
+  while(true && tries < 1000){
+    tries++;
+    const fx = Math.floor(Math.random()*GRID)+1;
+    const fy = Math.floor(Math.random()*GRID)+1;
+    if (!snake.some(s=>s.x===fx && s.y===fy)){
+      food = {x:fx,y:fy};
+      // position absolute food element using grid coordinates:
+      const cellW = board.clientWidth / GRID;
+      const cellH = board.clientHeight / GRID;
+      foodEl.style.left = `${(food.x-1)*cellW}px`;
+      foodEl.style.top  = `${(food.y-1)*cellH}px`;
+      return;
     }
   }
-}, { passive: false });
+}
 
-function updateGame() {
-  if (!isGameRunning || isPaused) return;
+/* Draw snake cells (we create DIVs inside board) */
+function draw(){
+  // remove previous snake cells
+  board.querySelectorAll(".snake-cell").forEach(n=>n.remove());
+  // draw each part
+  for(let i=0;i<snake.length;i++){
+    const p = snake[i];
+    const d = document.createElement("div");
+    d.className = "snake-cell";
+    d.style.gridColumn = p.x;
+    d.style.gridRow = p.y;
+    // color head differently
+    d.style.background = (i===0) ? "linear-gradient(to bottom,#b7ffb7,#00c853)" : "#00ff7f";
+    board.appendChild(d);
+  }
+}
 
-  let headX = snakeBody[0].x;
-  let headY = snakeBody[0].y;
+/* Update loop */
+function step(){
+  if (!running || paused) return;
+  let head = {...snake[0]};
+  if (dir === "UP") head.y--;
+  if (dir === "DOWN") head.y++;
+  if (dir === "LEFT") head.x--;
+  if (dir === "RIGHT") head.x++;
 
-  if (direction === "UP") headY -= 1;
-  else if (direction === "DOWN") headY += 1;
-  else if (direction === "LEFT") headX -= 1;
-  else if (direction === "RIGHT") headX += 1;
-
-  let newHead = { x: headX, y: headY };
-
-  if (headX < 1 || headX > 30 || headY < 1 || headY > 30) return gameOver();
-  for (let part of snakeBody) {
-    if (part.x === newHead.x && part.y === newHead.y) return gameOver();
+  // wall collision
+  if (head.x < 1 || head.x > GRID || head.y < 1 || head.y > GRID){
+    return onGameOver();
+  }
+  // self collision
+  for(let i=0;i<snake.length;i++){
+    if (snake[i].x === head.x && snake[i].y === head.y) return onGameOver();
   }
 
-  snakeBody.unshift(newHead);
+  snake.unshift(head);
 
-  if (newHead.x === foodx && newHead.y === foody) {
+  // food eaten
+  if (head.x === food.x && head.y === food.y){
     score++;
-    scoreSpan.textContent = "Score: " + score;
-
-    if (score > highScore) {
+    scoreEl.textContent = `Score: ${score}`;
+    if (score > highScore){
       highScore = score;
-      localStorage.setItem("snakeHighScore", highScore);
-      highScoreSpan.textContent = "High Score: " + highScore;
+      localStorage.setItem("snakeHigh", highScore);
+      highEl.textContent = `High: ${highScore}`;
     }
 
-    // 🐍 Speed logic
-    if (score === 10) {
-      speed = 150;
-    } else if (score > 10 && score % 5 === 0 && speed > 60) {
-      speed -= 10;
-      clearInterval(gameInterval);
-      gameInterval = setInterval(updateGame, speed);
+    // speed logic:
+    // first 10 points — remain slow (baseSpeed)
+    // after score >= 10, every 5 points decrease delay by 15ms (faster)
+    if (score >= 10){
+      const extraSteps = Math.floor((score - 10)/5);
+      speed = Math.max(70, baseSpeed - extraSteps * 15);
+      clearInterval(intervalId);
+      intervalId = setInterval(step, speed);
     }
 
-    randomFood();
+    placeFood();
   } else {
-    snakeBody.pop();
+    snake.pop();
   }
 
-  drawSnake();
+  draw();
 }
 
-function startGame() {
+/* Start / restart / pause / resume */
+function startGame(){
   score = 0;
-  scoreSpan.textContent = "Score: " + score;
-  direction = "RIGHT";
-  snakeBody = [{ x: 6, y: 1 }];
-  speed = 200;
-  randomFood();
-  drawSnake();
-
+  scoreEl.textContent = `Score: ${score}`;
+  snake = [{x:10,y:10}];
+  dir = "RIGHT";
+  running = true;
+  paused = false;
   overlayPlay.style.display = "none";
   overlayGameOver.style.display = "none";
-  isGameRunning = true;
-  isPaused = false;
-
-  if (gameInterval) clearInterval(gameInterval);
-  gameInterval = setInterval(updateGame, speed);
+  baseSpeed = 220; // slow starting speed
+  speed = baseSpeed;
+  clearInterval(intervalId);
+  intervalId = setInterval(step, speed);
+  placeFood();
+  draw();
+  pauseBtn.disabled = false;
+  resumeBtn.disabled = true;
 }
-
-function gameOver() {
-  clearInterval(gameInterval);
-  isGameRunning = false;
+function onGameOver(){
+  running = false;
+  paused = false;
+  clearInterval(intervalId);
   overlayGameOver.style.display = "flex";
+  pauseBtn.disabled = true;
+  resumeBtn.disabled = true;
 }
-
-function pauseGame() {
-  if (!isGameRunning || isPaused) return;
-  isPaused = true;
+function pauseGame(){
+  if (!running || paused) return;
+  paused = true;
   pauseBtn.disabled = true;
   resumeBtn.disabled = false;
 }
-
-function resumeGame() {
-  if (!isGameRunning || !isPaused) return;
-  isPaused = false;
+function resumeGame(){
+  if (!running || !paused) return;
+  paused = false;
   pauseBtn.disabled = false;
   resumeBtn.disabled = true;
 }
 
+/* Touch swipe controls */
+let sX=0,sY=0,eX=0,eY=0;
+board.addEventListener("touchstart", e=>{
+  const t = e.touches[0];
+  sX = t.clientX; sY = t.clientY;
+}, {passive:true});
+
+board.addEventListener("touchend", e=>{
+  const t = e.changedTouches[0];
+  eX = t.clientX; eY = t.clientY;
+  if (!running || paused) return;
+  const dx = eX - sX, dy = eY - sY;
+  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return; // tiny swipe: ignore
+  if (Math.abs(dx) > Math.abs(dy)){
+    if (dx > 0 && dir !== "LEFT") dir = "RIGHT";
+    else if (dx < 0 && dir !== "RIGHT") dir = "LEFT";
+  } else {
+    if (dy > 0 && dir !== "UP") dir = "DOWN";
+    else if (dy < 0 && dir !== "DOWN") dir = "UP";
+  }
+}, {passive:true});
+
+/* Keyboard fallback */
+window.addEventListener("keydown", e=>{
+  if (!running) return;
+  if (e.key === "ArrowUp" && dir !== "DOWN") dir = "UP";
+  else if (e.key === "ArrowDown" && dir !== "UP") dir = "DOWN";
+  else if (e.key === "ArrowLeft" && dir !== "RIGHT") dir = "LEFT";
+  else if (e.key === "ArrowRight" && dir !== "LEFT") dir = "RIGHT";
+});
+
+/* Resize / reposition food on orientation change */
+window.addEventListener("resize", ()=>{
+  // reposition food element to align with grid after resize
+  placeFood();
+});
+
+/* Buttons */
 playBtn.addEventListener("click", startGame);
-gameOverBtn.addEventListener("click", startGame);
+restartBtn.addEventListener("click", ()=>{ overlayGameOver.style.display = "none"; startGame(); });
 pauseBtn.addEventListener("click", pauseGame);
 resumeBtn.addEventListener("click", resumeGame);
 
-randomFood();
-drawSnake();
+/* Initial render */
+placeFood();
+draw();
 overlayPlay.style.display = "flex";
+pauseBtn.disabled = true;
+resumeBtn.disabled = true;
