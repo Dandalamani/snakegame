@@ -89,17 +89,25 @@ function draw() {
   if (direction === "DOWN") headY += box;
 
   if (headX === food.x && headY === food.y) {
-    score++;
-    scoreDisplay.textContent = score;
-    spawnFood();
-    if (score > 10 && score % 5 === 0 && speed > 50) {
-      clearInterval(game);
-      speed -= 20;
-      game = setInterval(draw, speed);
-    }
-  } else {
-    snake.pop();
+  score++;
+  scoreDisplay.textContent = score;
+  spawnFood();
+
+  // Speed logic
+  if (score <= 15) {
+    // Very slow for first 15 points
+    clearInterval(game);
+    speed = 250; // slow starting speed
+    game = setInterval(draw, speed);
+  } else if (score > 15 && score % 5 === 0 && speed > 70) {
+    // Gradual speed increase after 15 points
+    clearInterval(game);
+    speed -= 10; // increase speed slowly
+    game = setInterval(draw, speed);
   }
+} else {
+  snake.pop();
+}
 
   const newHead = { x: headX, y: headY };
 
