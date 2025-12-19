@@ -18,7 +18,7 @@ let snake, food, direction, game, paused, score, highScore, speed;
 highScore = localStorage.getItem("highScore") || 0;
 highScoreDisplay.textContent = highScore;
 
-// Initial Setup: Only show Play Button
+// Initial Setup
 canvas.style.display = "none";
 scoreBoard.style.display = "none";
 pauseBtn.style.display = "none";
@@ -39,8 +39,6 @@ function initGame() {
   scoreBoard.style.display = "block";
   pauseBtn.style.display = "inline-block";
   resumeBtn.style.display = "none";
-
-  // Show arrows only after Play
   document.querySelector(".arrow-controls").style.display = "flex";
 }
 
@@ -57,7 +55,7 @@ function draw() {
   ctx.fillStyle = "#1e293b";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Draw food
+  // Food
   const gradientFood = ctx.createRadialGradient(
     food.x + 10, food.y + 10, 2,
     food.x + 10, food.y + 10, 10
@@ -69,7 +67,7 @@ function draw() {
   ctx.roundRect(food.x, food.y, box, box, 6);
   ctx.fill();
 
-  // Draw snake
+  // Snake
   for (let i = 0; i < snake.length; i++) {
     ctx.fillStyle = i === 0 ? "#00ffcc" : "#00e6b8";
     ctx.shadowColor = "#00ffff";
@@ -89,25 +87,22 @@ function draw() {
   if (direction === "DOWN") headY += box;
 
   if (headX === food.x && headY === food.y) {
-  score++;
-  scoreDisplay.textContent = score;
-  spawnFood();
+    score++;
+    scoreDisplay.textContent = score;
+    spawnFood();
 
-  // Speed logic
-  if (score <= 15) {
-    // Very slow for first 15 points
-    clearInterval(game);
-    speed = 250; // slow starting speed
-    game = setInterval(draw, speed);
-  } else if (score > 15 && score % 5 === 0 && speed > 70) {
-    // Gradual speed increase after 15 points
-    clearInterval(game);
-    speed -= 10; // increase speed slowly
-    game = setInterval(draw, speed);
+    if (score <= 15) {
+      clearInterval(game);
+      speed = 250;
+      game = setInterval(draw, speed);
+    } else if (score > 15 && score % 5 === 0 && speed > 70) {
+      clearInterval(game);
+      speed -= 10;
+      game = setInterval(draw, speed);
+    }
+  } else {
+    snake.pop();
   }
-} else {
-  snake.pop();
-}
 
   const newHead = { x: headX, y: headY };
 
@@ -132,12 +127,10 @@ function handleGameOver() {
   }
   highScoreDisplay.textContent = highScore;
 
-  canvas.style.display = "block";
   scoreBoard.style.display = "none";
   pauseBtn.style.display = "none";
   resumeBtn.style.display = "none";
   document.querySelector(".arrow-controls").style.display = "none";
-
   gameOverScreen.style.display = "flex";
 }
 
@@ -169,7 +162,7 @@ resumeBtn.addEventListener("click", () => {
   resumeBtn.style.display = "none";
 });
 
-// Arrow Buttons - Instant Response
+// On-screen Arrow Buttons (Mobile)
 arrowButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     const dir = btn.getAttribute("data-dir");
@@ -180,12 +173,31 @@ arrowButtons.forEach(btn => {
       (dir === "RIGHT" && direction !== "LEFT")
     ) {
       direction = dir;
-      draw(); // immediate movement
+      draw();
     }
   });
 });
 
-// Swipe Controls
+// ✅ KEYBOARD ARROW CONTROLS (Laptop/Desktop)
+document.addEventListener("keydown", (e) => {
+  if (paused) return;
+
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault(); // stop page scroll
+  }
+
+  if (e.key === "ArrowUp" && direction !== "DOWN") {
+    direction = "UP";
+  } else if (e.key === "ArrowDown" && direction !== "UP") {
+    direction = "DOWN";
+  } else if (e.key === "ArrowLeft" && direction !== "RIGHT") {
+    direction = "LEFT";
+  } else if (e.key === "ArrowRight" && direction !== "LEFT") {
+    direction = "RIGHT";
+  }
+});
+
+// Swipe Controls (Mobile)
 let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
 
 canvas.addEventListener("touchstart", e => {
@@ -214,7 +226,7 @@ function handleSwipe() {
   }
 }
 
-// Rounded rectangle helper
+// Rounded Rectangle Helper
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
   if (w < 2 * r) r = w / 2;
   if (h < 2 * r) r = h / 2;
