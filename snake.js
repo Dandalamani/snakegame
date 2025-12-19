@@ -9,7 +9,6 @@ const scoreBoard = document.getElementById("scoreBoard");
 const gameOverScreen = document.getElementById("gameOverScreen");
 const finalScore = document.getElementById("finalScore");
 const replayBtn = document.getElementById("replayBtn");
-const gameContainer = document.getElementById("gameContainer");
 const arrowButtons = document.querySelectorAll(".arrow-btn");
 
 const box = 20;
@@ -30,7 +29,10 @@ function initGame() {
   direction = "RIGHT";
   score = 0;
   paused = false;
-  speed = 200;
+
+  // ⭐ MODERATE START SPEED
+  speed = 300;
+
   spawnFood();
   scoreDisplay.textContent = score;
 
@@ -55,7 +57,7 @@ function draw() {
   ctx.fillStyle = "#1e293b";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Food
+  // Draw food
   const gradientFood = ctx.createRadialGradient(
     food.x + 10, food.y + 10, 2,
     food.x + 10, food.y + 10, 10
@@ -67,7 +69,7 @@ function draw() {
   ctx.roundRect(food.x, food.y, box, box, 6);
   ctx.fill();
 
-  // Snake
+  // Draw snake
   for (let i = 0; i < snake.length; i++) {
     ctx.fillStyle = i === 0 ? "#00ffcc" : "#00e6b8";
     ctx.shadowColor = "#00ffff";
@@ -86,18 +88,16 @@ function draw() {
   if (direction === "UP") headY -= box;
   if (direction === "DOWN") headY += box;
 
+  // 🟢 Eat food
   if (headX === food.x && headY === food.y) {
     score++;
     scoreDisplay.textContent = score;
     spawnFood();
 
-    if (score <= 15) {
+    // ⭐ SMOOTH SPEED INCREASE
+    if (score % 5 === 0 && speed > 130) {
       clearInterval(game);
-      speed = 250;
-      game = setInterval(draw, speed);
-    } else if (score > 15 && score % 5 === 0 && speed > 70) {
-      clearInterval(game);
-      speed -= 10;
+      speed -= 5; // gentle increase
       game = setInterval(draw, speed);
     }
   } else {
@@ -106,6 +106,7 @@ function draw() {
 
   const newHead = { x: headX, y: headY };
 
+  // ❌ Collision detection
   if (
     headX < 0 || headY < 0 ||
     headX >= canvas.width || headY >= canvas.height ||
@@ -121,6 +122,7 @@ function draw() {
 
 function handleGameOver() {
   finalScore.textContent = score;
+
   if (score > highScore) {
     highScore = score;
     localStorage.setItem("highScore", highScore);
@@ -134,7 +136,7 @@ function handleGameOver() {
   gameOverScreen.style.display = "flex";
 }
 
-// Play / Replay
+// ▶ Play / Replay
 playBtn.addEventListener("click", () => {
   initGame();
   playBtn.style.display = "none";
@@ -149,7 +151,7 @@ replayBtn.addEventListener("click", () => {
   game = setInterval(draw, speed);
 });
 
-// Pause / Resume
+// ⏸ Pause / Resume
 pauseBtn.addEventListener("click", () => {
   paused = true;
   pauseBtn.style.display = "none";
@@ -162,7 +164,7 @@ resumeBtn.addEventListener("click", () => {
   resumeBtn.style.display = "none";
 });
 
-// On-screen Arrow Buttons (Mobile)
+// 📱 On-screen Arrow Buttons
 arrowButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     const dir = btn.getAttribute("data-dir");
@@ -178,27 +180,22 @@ arrowButtons.forEach(btn => {
   });
 });
 
-// ✅ KEYBOARD ARROW CONTROLS (Laptop/Desktop)
+// ⌨ Keyboard Controls (Desktop)
 document.addEventListener("keydown", (e) => {
   if (paused) return;
 
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-    e.preventDefault(); // stop page scroll
+    e.preventDefault();
   }
 
-  if (e.key === "ArrowUp" && direction !== "DOWN") {
-    direction = "UP";
-  } else if (e.key === "ArrowDown" && direction !== "UP") {
-    direction = "DOWN";
-  } else if (e.key === "ArrowLeft" && direction !== "RIGHT") {
-    direction = "LEFT";
-  } else if (e.key === "ArrowRight" && direction !== "LEFT") {
-    direction = "RIGHT";
-  }
+  if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+  else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+  else if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+  else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
 });
 
-// Swipe Controls (Mobile)
-let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
+// 📱 Swipe Controls
+let touchStartX = 0, touchStartY = 0;
 
 canvas.addEventListener("touchstart", e => {
   const t = e.touches[0];
@@ -208,14 +205,8 @@ canvas.addEventListener("touchstart", e => {
 
 canvas.addEventListener("touchend", e => {
   const t = e.changedTouches[0];
-  touchEndX = t.clientX;
-  touchEndY = t.clientY;
-  handleSwipe();
-});
-
-function handleSwipe() {
-  const dx = touchEndX - touchStartX;
-  const dy = touchEndY - touchStartY;
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
 
   if (Math.abs(dx) > Math.abs(dy)) {
     if (dx > 30 && direction !== "LEFT") direction = "RIGHT";
@@ -224,7 +215,7 @@ function handleSwipe() {
     if (dy > 30 && direction !== "UP") direction = "DOWN";
     else if (dy < -30 && direction !== "DOWN") direction = "UP";
   }
-}
+});
 
 // Rounded Rectangle Helper
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
