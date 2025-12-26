@@ -31,7 +31,7 @@ function initGame() {
   paused = false;
 
   // ⭐ MODERATE START SPEED
-  speed = 300;
+  speed = 450;
 
   spawnFood();
   scoreDisplay.textContent = score;
